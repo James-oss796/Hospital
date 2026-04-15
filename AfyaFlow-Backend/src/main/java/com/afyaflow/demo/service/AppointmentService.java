@@ -8,7 +8,6 @@ import com.afyaflow.demo.model.Appointment;
 import com.afyaflow.demo.repository.AppointmentRepository;
 
 @Service
-@SuppressWarnings("null")
 public class AppointmentService {
 
     private final AppointmentRepository repository;

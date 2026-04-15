@@ -12,7 +12,6 @@ import com.afyaflow.demo.model.Patient;
 import com.afyaflow.demo.repository.PatientRepository;
 
 @Service
-@SuppressWarnings("null")
 public class PatientService {
 
     private final PatientRepository patientRepository;

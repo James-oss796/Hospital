@@ -42,7 +42,6 @@ public class WardService {
         return bedRepository.save(bed);
     }
 
-    @SuppressWarnings("null")
     public Ward saveWard(Ward ward) {
         if (ward == null) throw new IllegalArgumentException("Ward cannot be null");
         Ward savedWard = wardRepository.save(ward);
