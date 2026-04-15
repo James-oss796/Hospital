@@ -43,10 +43,11 @@ const RegisterPage: React.FC = () => {
           navigate(isAuthenticated ? '/admin' : '/login');
         }, 2000);
       } else {
-        setError('Username already exists. Please choose another.');
+        setError('Username already exists or registration failed. Please try again.');
       }
-    } catch (err) {
-      setError('An error occurred during registration. Please try again.');
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || 'An error occurred during registration. Please try again.';
+      setError(errorMsg);
     } finally {
       setIsSubmitting(false);
     }

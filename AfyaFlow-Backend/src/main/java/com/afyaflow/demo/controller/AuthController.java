@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -41,29 +43,32 @@ public class AuthController {
     }
 
     @PostMapping({"/register", "/signup"})
-    public ResponseEntity<AuthResponse> register(@RequestBody AuthRequest request) {
+    public ResponseEntity<?> register(@RequestBody AuthRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            return ResponseEntity.badRequest().build(); // Email already exists
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Email already exists");
+            return ResponseEntity.badRequest().body(response);
         }
 
         Role userRole;
-        String requestedRole = request.getRole() != null ? request.getRole().toUpperCase() : "USER";
+        boolean adminExists = userRepository.existsByRoleName("ADMIN");
         
-        if (request.getRole() != null) {
-            userRole = roleRepository.findByName(requestedRole).orElseGet(() -> {
-                Role r = new Role();
-                r.setName(requestedRole);
-                return roleRepository.save(r);
-            });
-        } else if (userRepository.count() == 0) {
-            // First user gets Admin role
+        if (!adminExists) {
+            // If NO Admin exists in the whole system, this user becomes the Admin
             userRole = roleRepository.findByName("ADMIN").orElseGet(() -> {
                 Role r = new Role();
                 r.setName("ADMIN");
                 return roleRepository.save(r);
             });
+        } else if (request.getRole() != null) {
+            String requestedRole = request.getRole().toUpperCase();
+            userRole = roleRepository.findByName(requestedRole).orElseGet(() -> {
+                Role r = new Role();
+                r.setName(requestedRole);
+                return roleRepository.save(r);
+            });
         } else {
-            // Subsequent open registrations default to USER
+            // Default to USER for subsequent registrations if no role specified
             userRole = roleRepository.findByName("USER").orElseGet(() -> {
                 Role r = new Role();
                 r.setName("USER");
@@ -84,17 +89,22 @@ public class AuthController {
 
         // Auto-create clinical profile for doctors
         if ("DOCTOR".equals(userRole.getName().toUpperCase())) {
-            com.afyaflow.demo.model.Doctor doctor = com.afyaflow.demo.model.Doctor.builder()
-                    .name(request.getEmail())
-                    .email(request.getEmail())
-                    .specialization("General")
-                    .status("available")
-                    .patientsSeenToday(0)
-                    .build();
-            doctorService.createDoctor(doctor);
+            try {
+                com.afyaflow.demo.model.Doctor doctor = com.afyaflow.demo.model.Doctor.builder()
+                        .name(request.getEmail())
+                        .email(request.getEmail())
+                        .specialization("General")
+                        .status("available")
+                        .patientsSeenToday(0)
+                        .build();
+                doctorService.createDoctor(doctor);
+            } catch (Exception e) {
+                // Log but don't fail registration if profile creation fails
+                System.err.println("Failed to create doctor profile: " + e.getMessage());
+            }
         }
 
-        auditService.log("USER_REGISTERED", "User", user.getId().toString(), "New user registered with email: " + user.getEmail());
+        auditService.log("USER_REGISTERED", "User", user.getId().toString(), "New user registered with email: " + user.getEmail() + " as role: " + userRole.getName());
 
         String token = jwtService.generateToken(user);
         return ResponseEntity.ok(AuthResponse.builder().token(token).build());

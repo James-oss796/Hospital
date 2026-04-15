@@ -180,7 +180,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
     const [ready, setReady] = useState(false);
     const { notify } = useNotification();
-    const { user } = useAuth();
+    const { user, isAuthenticated } = useAuth();
     const isAdmin = user?.role === 'Admin';
 
     const fetchDepartments = useCallback(async () => {
@@ -221,6 +221,19 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [isAdmin]);
 
     useEffect(() => {
+        if (!isAuthenticated) {
+            // Clear data state on logout
+            setPatients([]);
+            setAppointments([]);
+            setDoctors([]);
+            setDepartments([]);
+            setWards([]);
+            setInventory([]);
+            setAuditLogs([]);
+            setReady(false);
+            return;
+        }
+
         const fetchInitialData = async () => {
             try {
                 await Promise.all([
@@ -241,13 +254,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
             } catch (error) {
                 console.error("Failed to fetch initial data:", error);
-                notify('Could not connect to health server. Please check your connection.', 'error', 'Connection Error');
+                // Don't notify on 401/403 if we're not authenticated (though guard should prevent this)
+                if (isAuthenticated) {
+                    notify('Could not connect to health server. Please check your connection.', 'error', 'Connection Error');
+                }
             }
             setReady(true);
         };
 
         fetchInitialData();
-    }, [notify, fetchDepartments, fetchWards, fetchAuditLogs]);
+    }, [isAuthenticated, notify, fetchDepartments, fetchWards, fetchAuditLogs]);
 
 
     const addPatient = useCallback(async (data: Omit<Patient, 'id' | 'tokenId' | 'registeredAt'>): Promise<Patient> => {

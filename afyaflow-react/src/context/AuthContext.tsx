@@ -38,11 +38,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sessionStorage.setItem(TOKEN_STORAGE_KEY, token);
     try {
         const decoded: any = jwtDecode(token);
+        
+        // Normalize role from backend (UPPERCASE) to frontend (PascalCase)
+        const normalizeRole = (role: string): Role => {
+            const r = role.toUpperCase();
+            if (r === 'ADMIN') return 'Admin';
+            if (r === 'DOCTOR') return 'Doctor';
+            if (r === 'RECEPTIONIST') return 'Receptionist';
+            return 'USER';
+        };
+
         setUser({
             id: decoded.id || '',
             email: decoded.email || decoded.sub, // Fallbacks
             username: decoded.sub, 
-            role: decoded.role || 'USER',
+            role: normalizeRole(decoded.role || 'USER'),
             department: decoded.department 
         });
     } catch {
