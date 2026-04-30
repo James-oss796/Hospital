@@ -59,7 +59,7 @@ const NewAdmissionModal: React.FC<Props> = ({ onClose, onSuccess }) => {
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
             <div className="w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
-                <DashboardCard noPadding className="flex-1 flex flex-col shadow-2xl border-outline-variant/20 bg-white">
+                <DashboardCard noPadding className="flex-1 flex flex-col overflow-hidden shadow-2xl border-outline-variant/20 bg-white">
                     {/* Header */}
                     <div className="px-8 py-6 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-lowest">
                         <div className="flex items-center gap-4">

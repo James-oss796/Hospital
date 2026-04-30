@@ -42,13 +42,7 @@ const DoctorManagementModal: React.FC<DoctorManagementModalProps> = ({ onClose }
 
   const handleSaveDoctor = (updatedDoctor: Doctor) => {
     if (updateDoctor) {
-      updateDoctor(updatedDoctor.id, {
-        departmentId: updatedDoctor.departmentId,
-        specialization: updatedDoctor.specialization,
-        station: updatedDoctor.station,
-        shift: updatedDoctor.shift,
-        status: updatedDoctor.status,
-      });
+      updateDoctor(updatedDoctor.id, updatedDoctor);
       notify(`${updatedDoctor.name} updated successfully!`, 'success');
       setEditingDoctor(null);
     }

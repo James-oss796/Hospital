@@ -153,15 +153,16 @@ const EditStaffModal: React.FC<EditStaffModalProps> = ({ doctor, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-        <div className="bg-primary p-6 text-white flex justify-between items-center">
+      <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+        <div className="bg-primary p-6 text-white shrink-0 flex justify-between items-center">
           <h2 className="text-xl font-bold">Edit Specialist Details</h2>
           <button onClick={onClose} className="hover:bg-white/20 p-2 rounded-full transition-colors">
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
+          <div className="p-8 space-y-6 overflow-y-auto">
           <div className="grid grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-bold text-on-surface-variant mb-2">Full Name</label>
@@ -273,8 +274,9 @@ const EditStaffModal: React.FC<EditStaffModalProps> = ({ doctor, onClose }) => {
               </div>
             )}
           </div>
+          </div>
 
-          <div className="flex justify-end gap-4 pt-6">
+          <div className="flex justify-end gap-4 p-6 border-t border-outline-variant/10 shrink-0 bg-surface-container-lowest">
             <button
               type="button"
               onClick={onClose}
