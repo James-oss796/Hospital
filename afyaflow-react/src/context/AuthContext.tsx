@@ -64,6 +64,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const initAuth = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tokenFromUrl = urlParams.get('token');
+      if (tokenFromUrl) {
+          sessionStorage.setItem(TOKEN_STORAGE_KEY, tokenFromUrl);
+          window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
       const storedToken = sessionStorage.getItem(TOKEN_STORAGE_KEY);
       if (storedToken) {
           setSessionToken(storedToken);
@@ -79,6 +86,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await authApi.login({ email, password });
       if (response.data && response.data.token) {
+          const decoded: any = jwtDecode(response.data.token);
+          const role = (decoded.role || '').toUpperCase();
+          if (role === 'PATIENT' || role === 'USER') {
+              window.location.href = `http://localhost:5173/login?token=${response.data.token}`;
+              return false; // Prevent local login completion
+          }
+
           setSessionToken(response.data.token);
           notify(`Welcome back!`, 'success', 'Login Successful');
           setLoading(false);
@@ -107,7 +121,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: userData.username, 
         password,
         role: userData.role,
-        department: userData.department
+        departmentId: userData.departmentId,
+        firstName: userData.fullName.split(' ')[0],
+        lastName: userData.fullName.split(' ').slice(1).join(' ')
       });
       notify(`Account created successfully. You can now login.`, 'success', 'Staff Registered');
       return true;

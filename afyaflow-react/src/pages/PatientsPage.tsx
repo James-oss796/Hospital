@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
 import type { PatientStatus } from '../context/DataContext';
+import { useSearch } from '../context/SearchContext';
 import DashboardCard from '../components/ui/DashboardCard';
 import StatusChip from '../components/ui/StatusChip';
 
@@ -13,19 +14,50 @@ const STATUS_CHIP: Record<PatientStatus, { variant: 'success' | 'info' | 'error'
 
 const PatientsPage: React.FC = () => {
     const { patients } = useData();
+    const { searchQuery, setSearchQuery } = useSearch();
     const [filter, setFilter] = useState < PatientStatus | 'all' > ('all');
-    const [search, setSearch] = useState('');
+    const [search, setSearch] = useState(searchQuery);
     const [selected, setSelected] = useState < string | null > (null);
+
+    // Sync local search with global search
+    React.useEffect(() => {
+        setSearch(searchQuery);
+    }, [searchQuery]);
+
+    const handleSearchChange = (val: string) => {
+        setSearch(val);
+        setSearchQuery(val);
+    };
 
     const filtered = patients
         .filter(p => filter === 'all' || p.status === filter)
-        .filter(p =>
-            !search ||
-            p.name.toLowerCase().includes(search.toLowerCase()) ||
-            p.tokenId.toLowerCase().includes(search.toLowerCase()) ||
-            p.department.toLowerCase().includes(search.toLowerCase()) ||
-            (p.diagnosis || '').toLowerCase().includes(search.toLowerCase())
-        )
+        .filter(p => {
+            const s = search.toLowerCase();
+            if (!s) return true;
+            
+            // Basic info
+            if (
+                p.name.toLowerCase().includes(s) ||
+                p.tokenId.toLowerCase().includes(s) ||
+                p.department.toLowerCase().includes(s) ||
+                (p.diagnosis || '').toLowerCase().includes(s) ||
+                (p.consultationNotes || '').toLowerCase().includes(s)
+            ) return true;
+
+            // Prescriptions
+            if (p.prescriptions?.some(rx => 
+                rx.medicineName.toLowerCase().includes(s) || 
+                rx.instructions.toLowerCase().includes(s)
+            )) return true;
+
+            // Referrals
+            if (p.referrals?.some(ref => 
+                ref.reason.toLowerCase().includes(s) || 
+                ref.toSpecialty.toLowerCase().includes(s)
+            )) return true;
+
+            return false;
+        })
         .sort((a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime());
 
     const selectedPatient = selected ? patients.find(p => p.id === selected) : null;
@@ -94,7 +126,7 @@ const PatientsPage: React.FC = () => {
                             <span className="material-symbols-outlined text-outline text-sm">search</span>
                             <input
                                 value={search}
-                                onChange={e => setSearch(e.target.value)}
+                                onChange={e => handleSearchChange(e.target.value)}
                                 className="bg-transparent border-none focus:outline-none text-sm w-full placeholder:text-outline"
                                 placeholder="Search name, token, diagnosis..."
                             />
@@ -153,8 +185,8 @@ const PatientsPage: React.FC = () => {
                                             </td>
                                             <td className="px-5 py-4">
                                                 <StatusChip
-                                                    label={STATUS_CHIP[p.status].label}
-                                                    variant={STATUS_CHIP[p.status].variant as any}
+                                                    label={STATUS_CHIP[p.status as PatientStatus]?.label || String(p.status || 'Unknown')}
+                                                    variant={(STATUS_CHIP[p.status as PatientStatus]?.variant || 'neutral') as any}
                                                     dot
                                                 />
                                             </td>

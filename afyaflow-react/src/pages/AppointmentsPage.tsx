@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearch } from '../context/SearchContext';
 import { useData } from '../context/DataContext';
 import type { AppointmentStatus } from '../context/DataContext';
 import DashboardCard from '../components/ui/DashboardCard';
@@ -20,9 +21,20 @@ const TYPE_LABELS: Record<string, string> = {
 
 const AppointmentsPage: React.FC = () => {
     const { appointments, patients, updateAppointmentStatus } = useData();
+    const { searchQuery, setSearchQuery } = useSearch();
     const [filter, setFilter] = useState < AppointmentStatus | 'all' > ('all');
-    const [search, setSearch] = useState('');
+    const [search, setSearch] = useState(searchQuery);
     const [showBookModal, setShowBookModal] = useState(false);
+
+    // Sync local search with global search
+    useEffect(() => {
+        setSearch(searchQuery);
+    }, [searchQuery]);
+
+    const handleSearchChange = (val: string) => {
+        setSearch(val);
+        setSearchQuery(val);
+    };
 
     const queue = patients.filter(p => p.status === 'queued' || p.status === 'in-progress');
 
@@ -81,7 +93,7 @@ const AppointmentsPage: React.FC = () => {
                             <span className="material-symbols-outlined text-outline text-sm">search</span>
                             <input
                                 value={search}
-                                onChange={e => setSearch(e.target.value)}
+                                onChange={e => handleSearchChange(e.target.value)}
                                 className="bg-transparent border-none focus:outline-none text-sm w-full placeholder:text-outline"
                                 placeholder="Search patient or doctor..."
                             />

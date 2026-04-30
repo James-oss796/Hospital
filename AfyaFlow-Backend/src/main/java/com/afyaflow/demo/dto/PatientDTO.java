@@ -14,9 +14,14 @@ public class PatientDTO {
     private Long id;
     private String tokenId; // Maps to patientCode
     private String name;
+    private String firstName;
+    private String lastName;
+    private String email;
     private String phone;
     private Integer age;
+    private String dob;
     private String gender;
+    private String address;
     private String nationalId;
     private String reason;
     private String assignedDoctor;

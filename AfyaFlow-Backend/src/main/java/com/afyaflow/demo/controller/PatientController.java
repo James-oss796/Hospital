@@ -1,5 +1,6 @@
 package com.afyaflow.demo.controller;
 
+import java.security.Principal;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -38,6 +39,12 @@ public class PatientController {
     @GetMapping
     public List<PatientDTO> getAll() {
         return service.getAllPatients();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<PatientDTO> getMyProfile(Principal principal) {
+        if (principal == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return ResponseEntity.ok(service.getPatientByEmail(principal.getName()));
     }
 
     @GetMapping("/{id}")

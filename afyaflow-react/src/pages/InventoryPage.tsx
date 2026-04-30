@@ -1,12 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearch } from '../context/SearchContext';
 import { useData, getInventoryStatus } from '../context/DataContext';
 import DashboardCard from '../components/ui/DashboardCard';
 import StatusChip from '../components/ui/StatusChip';
 
 const InventoryPage: React.FC = () => {
     const { inventory } = useData();
-    const [search, setSearch] = useState('');
+    const { searchQuery, setSearchQuery } = useSearch();
+    const [search, setSearch] = useState(searchQuery);
     const [categoryFilter, setCategoryFilter] = useState('all');
+
+    // Sync local search with global search
+    useEffect(() => {
+        setSearch(searchQuery);
+    }, [searchQuery]);
+
+    const handleSearchChange = (val: string) => {
+        setSearch(val);
+        setSearchQuery(val);
+    };
 
     const categories = ['all', ...Array.from(new Set(inventory.map(i => i.category)))];
 
@@ -91,7 +103,7 @@ const InventoryPage: React.FC = () => {
                     <span className="material-symbols-outlined text-outline text-sm">search</span>
                     <input
                         value={search}
-                        onChange={e => setSearch(e.target.value)}
+                        onChange={e => handleSearchChange(e.target.value)}
                         className="bg-transparent border-none focus:outline-none text-sm placeholder:text-outline"
                         placeholder="Search items, suppliers..."
                     />

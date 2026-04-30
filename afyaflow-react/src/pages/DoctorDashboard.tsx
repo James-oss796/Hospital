@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearch } from '../context/SearchContext';
 import DashboardCard from '../components/ui/DashboardCard';
 import SignatureButton from '../components/ui/SignatureButton';
 import StatusChip from '../components/ui/StatusChip';
@@ -9,9 +10,74 @@ import type { Patient } from '../context/DataContext';
 import AddPrescriptionModal from '../components/modals/AddPrescriptionModal';
 import ReferralModal from '../components/modals/ReferralModal';
 import AssignBedModal from '../components/modals/AssignBedModal';
+import { startDoctorAppointmentMonitoring, confirmAppointment, type NewAppointment } from '../lib/notificationService';
 const DoctorDashboard: React.FC = () => {
   const { patients, updatePatientStatus, addPrescription, addReferral, wards, isAssignedToBed } = useData();
+  const { searchQuery, setSearchQuery } = useSearch();
   const { user } = useAuth();
+  const [search, setSearch] = useState(searchQuery);
+  
+  // ========== NEW APPOINTMENT MONITORING ==========
+  const [appointmentAlert, setAppointmentAlert] = useState<NewAppointment | null>(null);
+  const [showAppointmentAlert, setShowAppointmentAlert] = useState(false);
+
+  // Sync local search with global search
+  useEffect(() => {
+    setSearch(searchQuery);
+  }, [searchQuery]);
+
+  // ========== START APPOINTMENT MONITORING ==========
+  // Monitor for new appointments when doctor logs in
+  useEffect(() => {
+    if (!user?.id) return; // Don't start if not logged in
+
+    const handleNewAppointment = (appointment: NewAppointment) => {
+      // Show toast alert
+      setAppointmentAlert(appointment);
+      setShowAppointmentAlert(true);
+
+      // Auto-hide alert after 5 seconds
+      setTimeout(() => setShowAppointmentAlert(false), 5000);
+    };
+
+    // Start monitoring with callback
+    const doctorId = user?.id ? Number(user.id) : undefined;
+    if (!doctorId) return;
+    const stopMonitoring = startDoctorAppointmentMonitoring(
+      doctorId,
+      handleNewAppointment,
+      3000 // Poll every 3 seconds
+    );
+
+    // Cleanup on unmount
+    return () => stopMonitoring();
+  }, [user?.id]);
+
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    setSearchQuery(val);
+  };
+
+  // ========== HANDLE APPOINTMENT CONFIRMATION ==========
+  const handleConfirmAppointment = async (appointmentId: number) => {
+    if (!user?.id) return;
+    try {
+      const doctorId = Number(user.id);
+      const success = await confirmAppointment(appointmentId, doctorId);
+      if (success) {
+        setServedNotice('Appointment confirmed');
+        setTimeout(() => setServedNotice(null), 3000);
+      }
+    } catch (error) {
+      console.error('Error confirming appointment:', error);
+    }
+  };
+
+  // ========== HANDLE DISMISS APPOINTMENT ALERT ==========
+  const handleDismissAlert = () => {
+    setShowAppointmentAlert(false);
+    setAppointmentAlert(null);
+  };
   const [markedServed, setMarkedServed] = useState<string[]>([]);
   const [servedNotice, setServedNotice] = useState<string | null>(null);
   const [isPrescribing, setIsPrescribing] = useState(false);
@@ -21,6 +87,7 @@ const DoctorDashboard: React.FC = () => {
   // Get queue: filtered by doctor's department, in-progress first, then queued
   const queue = patients
     .filter(p => (p.status === 'queued' || p.status === 'in-progress') && (!user?.department || p.department === user.department))
+    .filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.tokenId.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
       if (a.status === 'in-progress') return -1;
       if (b.status === 'in-progress') return 1;
@@ -66,6 +133,34 @@ const DoctorDashboard: React.FC = () => {
 
   return (
     <div className="grid grid-cols-12 gap-8">
+      {/* New Appointment Alert Toast */}
+      {showAppointmentAlert && appointmentAlert && (
+        <div className="fixed top-20 right-6 z-50 bg-secondary text-white px-6 py-4 rounded-2xl shadow-xl shadow-secondary/30 flex items-center gap-4 animate-in slide-in-from-right-5 duration-300">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="material-symbols-outlined animate-pulse">notifications_active</span>
+              <p className="font-bold text-sm">New Appointment!</p>
+            </div>
+            <p className="text-xs opacity-90">{appointmentAlert.patientName} • {appointmentAlert.department}</p>
+            <p className="text-[10px] opacity-80 mt-1">{new Date(appointmentAlert.appointmentTime).toLocaleString()}</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleConfirmAppointment(appointmentAlert.id)}
+              className="bg-white text-secondary px-3 py-1 rounded-lg text-[10px] font-bold hover:bg-opacity-90 transition-all"
+            >
+              Confirm
+            </button>
+            <button
+              onClick={handleDismissAlert}
+              className="text-white hover:bg-white/20 p-1 rounded transition-all"
+            >
+              <span className="material-symbols-outlined text-sm">close</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Success toast */}
       {servedNotice && (
         <div className="fixed top-20 right-6 z-50 bg-secondary text-white px-5 py-4 rounded-2xl shadow-xl shadow-secondary/30 flex items-center gap-3">
@@ -453,12 +548,27 @@ const DoctorDashboard: React.FC = () => {
 
       {/* FAB - Quick Action Placeholder */}
       <div className="fixed bottom-8 right-8 z-50">
-        <button 
-          onClick={() => alert('Quick search functionality connected here in the future.')}
-          className="signature-gradient w-16 h-16 rounded-full flex items-center justify-center text-white shadow-2xl shadow-primary/40 hover:scale-105 transition-transform"
-        >
-          <span className="material-symbols-outlined text-3xl">search</span>
-        </button>
+        <div className="group relative">
+           <div className="absolute bottom-full right-0 mb-4 scale-0 group-hover:scale-100 transition-all origin-bottom-right">
+             <div className="bg-surface-container-high p-4 rounded-2xl shadow-2xl border border-outline-variant/20 w-80">
+               <div className="flex items-center gap-2 bg-surface-container-low px-4 py-3 rounded-xl">
+                 <span className="material-symbols-outlined text-outline text-sm">search</span>
+                 <input 
+                   value={search}
+                   onChange={e => handleSearchChange(e.target.value)}
+                   autoFocus
+                   className="bg-transparent border-none focus:outline-none text-sm w-full placeholder:text-outline"
+                   placeholder="Search queue..."
+                 />
+               </div>
+             </div>
+           </div>
+           <button 
+             className="signature-gradient w-16 h-16 rounded-full flex items-center justify-center text-white shadow-2xl shadow-primary/40 hover:scale-110 transition-transform"
+           >
+             <span className="material-symbols-outlined text-3xl">search</span>
+           </button>
+        </div>
       </div>
 
       {isPrescribing && activePatient && (

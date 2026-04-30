@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearch } from '../context/SearchContext';
 import { useData } from '../context/DataContext';
 import DashboardCard from '../components/ui/DashboardCard';
 import SignatureButton from '../components/ui/SignatureButton';
@@ -24,8 +25,20 @@ const REPORT_TYPES: { key: ReportType; label: string; icon: string; desc: string
 
 const ReportsPage: React.FC = () => {
   const { patients, departments } = useData();
+  const { searchQuery, setSearchQuery } = useSearch();
   const [activeReport, setActiveReport] = useState<ReportType>('patient_volume');
+  const [search, setSearch] = useState(searchQuery);
   const [dateRange, setDateRange] = useState('this_week');
+
+  // Sync local search with global search
+  useEffect(() => {
+    setSearch(searchQuery);
+  }, [searchQuery]);
+
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    setSearchQuery(val);
+  };
 
   const totalThisWeek  = VOLUME_DATA.reduce((s, d) => s + d.patients, 0);
   const totalAdmitted  = VOLUME_DATA.reduce((s, d) => s + d.admitted, 0);
@@ -54,6 +67,15 @@ const ReportsPage: React.FC = () => {
           <p className="text-on-surface-variant font-medium">Clinical data, performance metrics and exportable reports</p>
         </div>
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-surface-container-low px-4 py-2.5 rounded-2xl w-64 border border-outline-variant/30">
+            <span className="material-symbols-outlined text-outline text-sm">search</span>
+            <input 
+              value={search}
+              onChange={e => handleSearchChange(e.target.value)}
+              className="bg-transparent border-none focus:outline-none text-sm w-full placeholder:text-outline"
+              placeholder="Filter report data..."
+            />
+          </div>
           <select value={dateRange} onChange={e => setDateRange(e.target.value)}
             className="px-4 py-2.5 bg-surface-container-low border border-outline-variant/30 rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 appearance-none">
             <option value="today">Today</option>
@@ -112,7 +134,7 @@ const ReportsPage: React.FC = () => {
 
         {/* Patient Volume Chart */}
         {activeReport === 'patient_volume' && (
-          <div className="h-72">
+          <div className="h-72 min-h-72">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={VOLUME_DATA}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
@@ -129,7 +151,7 @@ const ReportsPage: React.FC = () => {
 
         {/* Department Load */}
         {activeReport === 'department_load' && (
-          <div className="h-72">
+          <div className="h-72 min-h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={DEPT_LOAD_DATA} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" />
@@ -160,7 +182,7 @@ const ReportsPage: React.FC = () => {
         {/* Morbidity */}
         {activeReport === 'morbidity' && (
           <div className="grid grid-cols-12 gap-6 items-center">
-            <div className="col-span-12 md:col-span-6 h-64">
+            <div className="col-span-12 md:col-span-6 h-64 min-h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={MORBIDITY_DATA} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={3} dataKey="value">

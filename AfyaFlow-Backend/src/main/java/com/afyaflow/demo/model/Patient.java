@@ -23,15 +23,26 @@ public class Patient {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String patientCode; // Maps to tokenId in frontend
+    private String patientCode;
 
+    // Full legacy name field (used by old receptionist flow)
     private String name;
+
+    // New split name fields (used by patient self-registration)
+    private String firstName;
+    private String lastName;
+
+    private String email;
 
     private String phone;
 
     private Integer age;
 
+    private String dob; // YYYY-MM-DD
+
     private String gender;
+
+    private String address;
 
     private String nationalId;
 
@@ -53,7 +64,6 @@ public class Patient {
 
     private String consultationNotes;
 
-    // Automatically set registeredAt before saving
     @PrePersist
     protected void onCreate() {
         if (this.registeredAt == null) {
@@ -61,3 +71,4 @@ public class Patient {
         }
     }
 }
+

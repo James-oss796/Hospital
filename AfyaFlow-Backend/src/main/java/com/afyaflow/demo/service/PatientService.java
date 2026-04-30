@@ -17,11 +17,13 @@ public class PatientService {
     private final PatientRepository patientRepository;
     private final PatientMapper patientMapper;
     private final AuditService auditService;
+    private final EmailService emailService;
 
-    public PatientService(PatientRepository patientRepository, PatientMapper patientMapper, AuditService auditService) {
+    public PatientService(PatientRepository patientRepository, PatientMapper patientMapper, AuditService auditService, EmailService emailService) {
         this.patientRepository = patientRepository;
         this.patientMapper = patientMapper;
         this.auditService = auditService;
+        this.emailService = emailService;
     }
 
     public PatientDTO registerPatient(PatientDTO patientDTO) {
@@ -38,6 +40,11 @@ public class PatientService {
 
         Patient saved = patientRepository.save(patient);
         
+        // Trigger email invitation if email is present for walk-in patients
+        if (saved.getEmail() != null && !saved.getEmail().isEmpty()) {
+            emailService.sendAccountInvitation(saved.getEmail(), saved.getName());
+        }
+        
         auditService.log("PATIENT_REGISTERED", "Patient", saved.getId().toString(), 
                 "New patient " + saved.getName() + " registered with token " + saved.getPatientCode());
         
@@ -53,6 +60,12 @@ public class PatientService {
     public PatientDTO getPatient(Long id) {
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with id: " + id));
+        return patientMapper.toDTO(patient);
+    }
+
+    public PatientDTO getPatientByEmail(String email) {
+        Patient patient = patientRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient profile not found for email: " + email));
         return patientMapper.toDTO(patient);
     }
 

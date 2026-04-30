@@ -1,10 +1,12 @@
 import React from 'react';
-import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Search, Bell, HelpCircle } from 'lucide-react';
+import { Search, Bell, HelpCircle, LogOut } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { useSearch } from '../../context/SearchContext';
 
 const TopNavBar: React.FC = () => {
   const { user, logout } = useAuth();
+  const { searchQuery, setSearchQuery } = useSearch();
   const navigate = useNavigate();
 
   const displayUser = user ? {
@@ -18,8 +20,10 @@ const TopNavBar: React.FC = () => {
   };
 
   const handleLogout = () => {
-    logout();
-    navigate('/login');
+    if (window.confirm('Are you sure you want to log out? You will need to log in again to access the system.')) {
+      logout();
+      navigate('/login');
+    }
   };
 
   return (
@@ -28,8 +32,10 @@ const TopNavBar: React.FC = () => {
         <Search className="w-5 h-5 text-outline" />
         <input 
           className="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-outline" 
-          placeholder="Search patients or tokens..." 
+          placeholder="Global search..." 
           type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
 

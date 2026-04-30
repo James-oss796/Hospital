@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearch } from '../context/SearchContext';
 import DashboardCard from '../components/ui/DashboardCard';
 import SignatureButton from '../components/ui/SignatureButton';
 import StatusChip from '../components/ui/StatusChip';
@@ -24,10 +25,28 @@ const BED_STATUS: Record<string, string> = {
 
 const WardsPage: React.FC = () => {
   const { wards, fetchWards } = useData();
+  const { searchQuery, setSearchQuery } = useSearch();
+  const [search, setSearch] = useState(searchQuery);
   const [selectedWard, setSelectedWard] = useState<Ward | null>(null);
   const [selectedBed, setSelectedBed] = useState<Bed | null>(null);
   const [showAddWard, setShowAddWard] = useState(false);
   const [newWardForm, setNewWardForm] = useState({ name: '', department: '', type: 'general' as Ward['type'], capacity: 10 });
+
+  // Sync local search with global search
+  useEffect(() => {
+    setSearch(searchQuery);
+  }, [searchQuery]);
+
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    setSearchQuery(val);
+  };
+
+  const filteredWards = wards.filter(w => 
+    !search || 
+    w.name.toLowerCase().includes(search.toLowerCase()) || 
+    w.department.toLowerCase().includes(search.toLowerCase())
+  );
 
   const totalBeds    = wards.reduce((s, w) => s + w.capacity, 0);
   const occupiedBeds = wards.reduce((s, w) => s + (w.beds?.filter(b => b.status === 'occupied').length || 0), 0);
@@ -64,7 +83,18 @@ const WardsPage: React.FC = () => {
           <h1 className="text-[2.5rem] font-extrabold text-primary tracking-tight leading-none mb-2">Ward Management</h1>
           <p className="text-on-surface-variant font-medium">Live bed occupancy across all clinical areas</p>
         </div>
-        <SignatureButton icon="add" onClick={() => setShowAddWard(true)}>Add Ward</SignatureButton>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-2xl w-64 border border-outline-variant/30">
+            <span className="material-symbols-outlined text-outline text-sm">search</span>
+            <input 
+              value={search}
+              onChange={e => handleSearchChange(e.target.value)}
+              className="bg-transparent border-none focus:outline-none text-sm w-full placeholder:text-outline"
+              placeholder="Search ward or dept..."
+            />
+          </div>
+          <SignatureButton icon="add" onClick={() => setShowAddWard(true)}>Add Ward</SignatureButton>
+        </div>
       </div>
 
       {/* KPI Strip */}
@@ -87,7 +117,7 @@ const WardsPage: React.FC = () => {
 
       {/* Ward Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {wards.map(ward => {
+        {filteredWards.map(ward => {
           const cfg = WARD_TYPE_CONFIG[ward.type];
           const occ = ward.beds?.filter(b => b.status === 'occupied').length || 0;
           const pct = Math.round((occ / ward.capacity) * 100);

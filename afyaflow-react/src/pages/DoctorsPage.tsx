@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearch } from '../context/SearchContext';
 import { useData } from '../context/DataContext';
 import type { DoctorStatus } from '../context/DataContext';
 import DashboardCard from '../components/ui/DashboardCard';
@@ -13,10 +14,29 @@ const STATUS_CONFIG: Record<DoctorStatus, { label: string; variant: 'success' | 
 
 const DoctorsPage: React.FC = () => {
     const { doctors, patients, appointments } = useData();
+    const { searchQuery, setSearchQuery } = useSearch();
     const [view, setView] = useState < 'grid' | 'list' > ('grid');
     const [statusFilter, setStatusFilter] = useState < DoctorStatus | 'all' > ('all');
+    const [search, setSearch] = useState(searchQuery);
 
-    const filtered = doctors.filter(d => statusFilter === 'all' || d.status === statusFilter);
+    // Sync local search with global search
+    useEffect(() => {
+        setSearch(searchQuery);
+    }, [searchQuery]);
+
+    const handleSearchChange = (val: string) => {
+        setSearch(val);
+        setSearchQuery(val);
+    };
+
+    const filtered = doctors
+        .filter(d => statusFilter === 'all' || d.status === statusFilter)
+        .filter(d => 
+            !search || 
+            d.name.toLowerCase().includes(search.toLowerCase()) || 
+            d.specialization.toLowerCase().includes(search.toLowerCase()) ||
+            d.station.toLowerCase().includes(search.toLowerCase())
+        );
 
     const getDoctorAppointments = (name: string) =>
         appointments.filter(a => a.doctorName === name);
@@ -71,19 +91,30 @@ const DoctorsPage: React.FC = () => {
             </div>
 
             {/* Filter */}
-            <div className="flex bg-surface-container-low rounded-2xl p-1 gap-1 w-fit">
-                {(['all', 'available', 'on-call', 'in-surgery', 'off-duty'] as const).map(tab => (
-                    <button
-                        key={tab}
-                        onClick={() => setStatusFilter(tab)}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${statusFilter === tab
-                                ? 'bg-white shadow-sm text-primary'
-                                : 'text-on-surface-variant hover:text-on-surface'
-                            }`}
-                    >
-                        {tab === 'all' ? 'All Staff' : tab.replace('-', ' ')}
-                    </button>
-                ))}
+            <div className="flex flex-wrap items-center gap-4">
+                <div className="flex bg-surface-container-low rounded-2xl p-1 gap-1 w-fit">
+                    {(['all', 'available', 'on-call', 'in-surgery', 'off-duty'] as const).map(tab => (
+                        <button
+                            key={tab}
+                            onClick={() => setStatusFilter(tab)}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${statusFilter === tab
+                                    ? 'bg-white shadow-sm text-primary'
+                                    : 'text-on-surface-variant hover:text-on-surface'
+                                }`}
+                        >
+                            {tab === 'all' ? 'All Staff' : tab.replace('-', ' ')}
+                        </button>
+                    ))}
+                </div>
+                <div className="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-2xl flex-1 max-w-xs border border-outline-variant/30">
+                    <span className="material-symbols-outlined text-outline text-sm">search</span>
+                    <input
+                        value={search}
+                        onChange={e => handleSearchChange(e.target.value)}
+                        className="bg-transparent border-none focus:outline-none text-sm w-full placeholder:text-outline"
+                        placeholder="Search doctor, specialty..."
+                    />
+                </div>
             </div>
 
             {/* Grid View */}

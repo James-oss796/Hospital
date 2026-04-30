@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearch } from '../context/SearchContext';
 import { useData } from '../context/DataContext';
 import DashboardCard from '../components/ui/DashboardCard';
 import StatusChip from '../components/ui/StatusChip';
@@ -18,15 +19,56 @@ const VISIT_HISTORY: Record<string, { date: string; doctor: string; department: 
 
 const PatientProfilePage: React.FC = () => {
   const { patients } = useData();
-  const [search, setSearch] = useState('');
+  const { searchQuery, setSearchQuery } = useSearch();
+  const [search, setSearch] = useState(searchQuery);
   const [selected, setSelected] = useState<Patient | null>(null);
   const [activeTab, setActiveTab] = useState<'history' | 'vitals' | 'prescriptions' | 'referrals'>('history');
 
-  const filteredPatients = patients.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.nationalId?.toLowerCase().includes(search.toLowerCase()) ||
-    p.tokenId?.toLowerCase().includes(search.toLowerCase())
-  );
+  // Sync local search with global search
+  useEffect(() => {
+    setSearch(searchQuery);
+  }, [searchQuery]);
+
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    setSearchQuery(val);
+  };
+
+  const filteredPatients = patients.filter(p => {
+    const s = search.toLowerCase();
+    if (!s) return true;
+    
+    // Basic info
+    if (
+      p.name.toLowerCase().includes(s) ||
+      p.nationalId?.toLowerCase().includes(s) ||
+      p.tokenId?.toLowerCase().includes(s) ||
+      p.diagnosis?.toLowerCase().includes(s) ||
+      p.consultationNotes?.toLowerCase().includes(s)
+    ) return true;
+
+    // Prescriptions
+    if (p.prescriptions?.some(rx => 
+      rx.medicineName.toLowerCase().includes(s) || 
+      rx.instructions.toLowerCase().includes(s)
+    )) return true;
+
+    // Referrals
+    if (p.referrals?.some(ref => 
+      ref.reason.toLowerCase().includes(s) || 
+      ref.toSpecialty.toLowerCase().includes(s)
+    )) return true;
+
+    // Visit History
+    const history = VISIT_HISTORY[p.id] || [];
+    if (history.some(v => 
+      v.diagnosis.toLowerCase().includes(s) || 
+      v.notes.toLowerCase().includes(s) ||
+      v.prescriptions.some(rx => rx.toLowerCase().includes(s))
+    )) return true;
+
+    return false;
+  });
 
   const visits = selected ? (VISIT_HISTORY[selected.id] || []) : [];
 
@@ -48,7 +90,7 @@ const PatientProfilePage: React.FC = () => {
             <span className="material-symbols-outlined text-outline text-sm">search</span>
             <input
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => handleSearchChange(e.target.value)}
               className="bg-transparent border-none focus:outline-none text-sm w-full placeholder:text-outline"
               placeholder="Search by name, ID no. or token…"
             />

@@ -32,8 +32,12 @@ public class AuditService {
                 .timestamp(LocalDateTime.now())
                 .build();
 
-        if (log != null) {
-            auditLogRepository.save(log);
+        try {
+            if (log != null) {
+                auditLogRepository.save(log);
+            }
+        } catch (Exception e) {
+            System.err.println("FAILED TO LOG AUDIT: " + e.getMessage());
         }
     }
 

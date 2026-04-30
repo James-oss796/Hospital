@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearch } from '../context/SearchContext';
 import DashboardCard from '../components/ui/DashboardCard';
 import StatusChip from '../components/ui/StatusChip';
 import PatientListModal from '../components/modals/PatientListModal';
@@ -14,14 +15,22 @@ const PRIORITY_VARIANT: Record<string, 'success' | 'error' | 'neutral' | 'info'>
 
 const ReceptionistDashboard: React.FC = () => {
   const { patients, departments } = useData();
+  const { searchQuery } = useSearch();
   const [selectedDepartment, setSelectedDepartment] = useState('All');
+  const [search, setSearch] = useState(searchQuery);
   const [lastToken, setLastToken] = useState<Patient | null>(null);
   const [isPatientListOpen, setIsPatientListOpen] = useState(false);
   const [showAdmissionModal, setShowAdmissionModal] = useState(false);
 
-  const filteredPatients = selectedDepartment === 'All' 
-    ? patients 
-    : patients.filter(p => p.department === selectedDepartment);
+  // Sync local search with global search
+  useEffect(() => {
+    setSearch(searchQuery);
+  }, [searchQuery]);
+
+  const filteredPatients = (selectedDepartment === 'All'
+    ? patients
+    : patients.filter(p => p.department === selectedDepartment))
+    .filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.tokenId.toLowerCase().includes(search.toLowerCase()));
 
   const queuePatients = filteredPatients
     .filter(p => p.status === 'queued' || p.status === 'in-progress')
@@ -74,7 +83,7 @@ const ReceptionistDashboard: React.FC = () => {
     </body>
   </html>
 `);
-w.document.close();
+    w.document.close();
   };
 
   return (
@@ -83,16 +92,15 @@ w.document.close();
       <div className="col-span-12 flex flex-col md:flex-row md:items-end justify-between gap-6 mb-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-primary">Reception Dashboard</h1>
-          <p className="text-on-surface-variant mt-1">Nairobi West Medical Hub • Level 4 Facility</p>
         </div>
-        
+
         {/* Department Filter Pills */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar max-w-full md:max-w-md lg:max-w-xl">
           <button
             onClick={() => setSelectedDepartment('All')}
             className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border
-              ${selectedDepartment === 'All' 
-                ? 'bg-primary text-on-primary border-primary shadow-md shadow-primary/20 scale-105' 
+              ${selectedDepartment === 'All'
+                ? 'bg-primary text-on-primary border-primary shadow-md shadow-primary/20 scale-105'
                 : 'bg-surface-container-low text-on-surface-variant border-outline-variant/30 hover:border-primary/50'}`}
           >
             All Departments
@@ -102,8 +110,8 @@ w.document.close();
               key={dept.id}
               onClick={() => setSelectedDepartment(dept.name)}
               className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border
-                ${selectedDepartment === dept.name 
-                  ? 'bg-secondary text-white border-secondary shadow-md shadow-secondary/20 scale-105' 
+                ${selectedDepartment === dept.name
+                  ? 'bg-secondary text-white border-secondary shadow-md shadow-secondary/20 scale-105'
                   : 'bg-surface-container-low text-on-surface-variant border-outline-variant/30 hover:border-primary/50'}`}
             >
               {dept.name}
@@ -253,7 +261,7 @@ w.document.close();
 
           {queueWaiting.length > 6 && (
             <div className="px-6 py-4 bg-surface-container-low text-center">
-              <button 
+              <button
                 onClick={() => setIsPatientListOpen(true)}
                 className="text-xs font-bold text-primary hover:underline"
               >

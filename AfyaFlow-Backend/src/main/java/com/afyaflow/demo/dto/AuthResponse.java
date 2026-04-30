@@ -10,5 +10,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AuthResponse {
+    // Used by old afyaflow-react frontend
     private String token;
+
+    // Used by new AfyaFlow-Frontend
+    private String accessToken;
+    private String role;
+    private Long userId;
 }

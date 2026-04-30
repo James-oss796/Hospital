@@ -27,7 +27,7 @@ public class Appointment {
 
     private String timeSlot;
     
-    private String department;
+    private String departmentName;
     
     private String type; // scheduled, walk-in, etc.
     

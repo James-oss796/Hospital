@@ -35,6 +35,7 @@ const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [roster, setRoster] = useState<RosterEntry[]>(INITIAL_ROSTER);
   const [showAddShift, setShowAddShift] = useState(false);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
 
   // Profile form state
   const [profileForm, setProfileForm] = useState({
@@ -61,7 +62,25 @@ const SettingsPage: React.FC = () => {
   // Add shift form
   const [shiftForm, setShiftForm] = useState({ staff: '', role: 'Doctor', department: '', date: today, shiftType: 'Morning', start: '08:00', end: '16:00' });
 
+  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        notify('File size must be less than 5MB', 'error', 'File Too Large');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePhoto(reader.result as string);
+        notify('Photo uploaded successfully', 'success', 'Profile Photo Updated');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleProfileSave = () => {
+    // TODO: Send profileForm and profilePhoto to backend API
     notify('Profile updated successfully.', 'success', 'Settings Saved');
   };
 
@@ -118,15 +137,37 @@ const SettingsPage: React.FC = () => {
           {activeTab === 'profile' && (
             <DashboardCard className="p-8 space-y-6">
               <div className="flex items-center gap-5 pb-6 border-b border-outline-variant/10">
-                <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-extrabold text-2xl">
-                  {(user?.username || 'U').slice(0, 2).toUpperCase()}
+                <div className="relative group">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-extrabold text-2xl overflow-hidden">
+                    {profilePhoto ? (
+                      <img src={profilePhoto} alt={user?.username} className="w-full h-full object-cover" />
+                    ) : (
+                      (user?.username || 'U').slice(0, 2).toUpperCase()
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    id="photo-upload"
+                    accept="image/*"
+                    onChange={handleProfilePhotoChange}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="photo-upload"
+                    className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-white text-2xl">camera_alt</span>
+                  </label>
                 </div>
                 <div>
                   <h3 className="font-bold text-on-surface text-lg">{user?.username}</h3>
                   <p className="text-sm text-on-surface-variant">{user?.role} · {user?.department || 'No Department'}</p>
-                  <button className="mt-2 text-xs font-bold text-primary hover:underline flex items-center gap-1">
+                  <label
+                    htmlFor="photo-upload"
+                    className="mt-2 text-xs font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                  >
                     <span className="material-symbols-outlined text-sm">upload</span>Change Photo
-                  </button>
+                  </label>
                 </div>
               </div>
 
@@ -134,7 +175,7 @@ const SettingsPage: React.FC = () => {
                 {[
                   { label: 'Display Name',  field: 'displayName',  placeholder: 'Your full name' },
                   { label: 'Email Address', field: 'email',         placeholder: 'name@hospital.org' },
-                  { label: 'Department',    field: 'department',    placeholder: 'Your clinical area' },
+                  ...(user?.role !== 'Doctor' ? [{ label: 'Department',    field: 'department',    placeholder: 'Your clinical area' }] : []),
                   { label: 'Phone Number',  field: 'phone',         placeholder: '+254 7XX XXX XXX' },
                 ].map(f => (
                   <div key={f.field}>

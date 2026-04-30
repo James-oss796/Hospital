@@ -11,7 +11,7 @@ const RegisterPage: React.FC = () => {
     fullName: '',
     password: '',
     role: 'Doctor' as Role,
-    department: '', 
+    departmentId: '' as string | number, 
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -31,8 +31,8 @@ const RegisterPage: React.FC = () => {
         {
           username: formData.username,
           fullName: formData.fullName,
-          role: formData.role,
-          department: formData.role === 'Doctor' ? formData.department : undefined,
+          role: isAuthenticated ? formData.role : 'Admin',
+          departmentId: formData.role === 'Doctor' ? Number(formData.departmentId) : undefined,
         },
         formData.password
       );
@@ -167,6 +167,7 @@ const RegisterPage: React.FC = () => {
                         onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
                         className="block w-full pl-11 pr-4 py-3 bg-surface-container-low border border-outline-variant/50 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-on-surface appearance-none"
                       >
+                        <option value="Admin">Admin</option>
                         <option value="Doctor">Doctor</option>
                         <option value="Receptionist">Receptionist</option>
                       </select>
@@ -184,13 +185,13 @@ const RegisterPage: React.FC = () => {
                         </div>
                         <select
                           required
-                          value={formData.department}
-                          onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                          value={formData.departmentId}
+                          onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
                           className="block w-full pl-11 pr-4 py-3 bg-surface-container-low border border-outline-variant/50 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-on-surface appearance-none"
                         >
                           <option value="">Select Department</option>
                           {departments.map((dept) => (
-                            <option key={dept.id} value={dept.name}>
+                            <option key={dept.id} value={dept.id}>
                               {dept.name}
                             </option>
                           ))}

@@ -25,6 +25,7 @@ const NewAdmissionModal: React.FC<Props> = ({ onClose, onSuccess }) => {
         phone: '',
         nationalId: '',
         reason: '',
+        email: '',
         department: departments[0]?.name || 'General',
         priority: 'standard' as Priority,
         assignedDoctor: '',
@@ -45,6 +46,7 @@ const NewAdmissionModal: React.FC<Props> = ({ onClose, onSuccess }) => {
             phone: form.phone.startsWith('+254') ? form.phone : `+254${form.phone}`,
             nationalId: form.nationalId,
             reason: form.reason,
+            email: form.email,
             department: form.department,
             priority: form.priority,
             status: 'queued',
@@ -151,6 +153,16 @@ const NewAdmissionModal: React.FC<Props> = ({ onClose, onSuccess }) => {
                                 required 
                                 value={form.phone} 
                                 onChange={e => set('phone', e.target.value)} 
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-6">
+                            <Input 
+                                label="Email Address (Optional)" 
+                                placeholder="patient@example.com" 
+                                type="email"
+                                value={form.email} 
+                                onChange={e => set('email', e.target.value)} 
                             />
                         </div>
 
