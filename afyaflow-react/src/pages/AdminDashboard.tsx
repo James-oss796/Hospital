@@ -254,8 +254,8 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="h-64 min-h-64">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-64 w-full" style={{ minHeight: 256 }}>
+            <ResponsiveContainer width="99%" height="100%">
               <BarChart data={volumeData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 10, fontWeight: 700 }} />

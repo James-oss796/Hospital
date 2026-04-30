@@ -134,7 +134,7 @@ const DoctorsPage: React.FC = () => {
                                 <div className="flex justify-between items-start mb-5">
                                     <div className="relative">
                                         <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center font-black text-primary text-lg">
-                                            {doc.name.split(' ').filter(n => !n.startsWith('Dr')).map(n => n[0]).join('').slice(0, 2)}
+                                            {(doc.name || 'Unknown').split(' ').filter(n => !n.startsWith('Dr')).map(n => n[0]).join('').slice(0, 2)}
                                         </div>
                                         <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-surface-container-lowest ${cfg.color}`} />
                                     </div>
@@ -211,7 +211,7 @@ const DoctorsPage: React.FC = () => {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-sm">
-                                                        {doc.name.split(' ').filter(n => !n.startsWith('Dr')).map(n => n[0]).join('').slice(0, 2)}
+                                                        {(doc.name || 'Unknown').split(' ').filter(n => !n.startsWith('Dr')).map(n => n[0]).join('').slice(0, 2)}
                                                     </div>
                                                     <p className="font-bold text-sm text-on-surface">{doc.name}</p>
                                                 </div>

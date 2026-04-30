@@ -182,8 +182,8 @@ const ReportsPage: React.FC = () => {
         {/* Morbidity */}
         {activeReport === 'morbidity' && (
           <div className="grid grid-cols-12 gap-6 items-center">
-            <div className="col-span-12 md:col-span-6 h-64 min-h-64">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="col-span-12 md:col-span-6 h-64 w-full" style={{ minHeight: 256 }}>
+              <ResponsiveContainer width="99%" height="100%">
                 <PieChart>
                   <Pie data={MORBIDITY_DATA} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={3} dataKey="value">
                     {MORBIDITY_DATA.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}

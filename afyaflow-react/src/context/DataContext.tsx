@@ -239,6 +239,7 @@ interface DataContextType {
     getDepartmentStats: () => Record<string, number>;
     addDepartment: (name: string) => Promise<void>;
     deleteDepartment: (id: number) => Promise<void>;
+    fetchWards: () => Promise<void>;
     fetchAuditLogs: () => Promise<void>;
     isAssignedToBed: (patientId: string) => boolean;
     updateDoctor: (id: string, data: any) => Promise<void>;

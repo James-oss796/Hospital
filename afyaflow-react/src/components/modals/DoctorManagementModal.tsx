@@ -2,15 +2,14 @@ import React, { useState, useMemo } from 'react';
 import { useData } from '../../context/DataContext';
 import { useNotification } from '../../context/NotificationContext';
 import DashboardCard from '../ui/DashboardCard';
-import SignatureButton from '../ui/SignatureButton';
-import type { Doctor, Department } from '../../context/DataContext';
+import type { Doctor } from '../../context/DataContext';
 
 interface DoctorManagementModalProps {
   onClose: () => void;
 }
 
 const DoctorManagementModal: React.FC<DoctorManagementModalProps> = ({ onClose }) => {
-  const { doctors, departments, updateDoctor, deleteDoctor } = useData();
+  const { doctors, departments, updateDoctor } = useData();
   const { notify } = useNotification();
   
   const [activeTab, setActiveTab] = useState<'departments' | 'doctors'>('departments');

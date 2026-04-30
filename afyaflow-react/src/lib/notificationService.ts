@@ -50,7 +50,7 @@ export interface QueueStats {
 
 // ========== ACTIVE POLLING SUBSCRIPTIONS ==========
 // Tracks active polling intervals so we can clean them up
-const activePollers: Map<string, NodeJS.Timeout> = new Map();
+const activePollers: Map<string, ReturnType<typeof setInterval>> = new Map();
 
 // ========== NOTIFICATION CACHE ==========
 // Store recently seen appointments to prevent duplicate alerts
@@ -109,7 +109,7 @@ export const startDoctorAppointmentMonitoring = (
       }
 
       const response = await fetch(
-        `/api/doctors/${doctorId}/appointments?status=pending,confirmed`,
+        `/api/appointments?doctorId=${doctorId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,

@@ -31,9 +31,16 @@ public class AppointmentController {
         return service.createAppointment(appointment);
     }
 
-    /** Get all appointments (used by receptionist / admin dashboards) */
+    /** Get all appointments, optionally filtered by patientId or doctorId */
     @GetMapping
-    public List<Appointment> getAppointments(){
+    public List<Appointment> getAppointments(
+            @RequestParam(required = false) Long patientId,
+            @RequestParam(required = false) Long doctorId) {
+        if (patientId != null) {
+            return service.getAppointmentsByPatient(patientId);
+        } else if (doctorId != null) {
+            return service.getAppointmentsByDoctor(doctorId);
+        }
         return service.getAppointments();
     }
 
